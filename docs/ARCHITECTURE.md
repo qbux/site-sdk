@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`@vidlove/site-sdk` is the **site boundary** between the new VidLove backend and the external file site.
+`@qbux/site-sdk` is the **site boundary** between the new Qbux backend and the external file site.
 
 The package intentionally has a narrow responsibility:
 
@@ -28,7 +28,7 @@ Host backend
      └── SiteSdkConfig.domain
             │
             ▼
-      @vidlove/site-sdk
+      @qbux/site-sdk
             │
             └── cheerio/parser logic
 ```
