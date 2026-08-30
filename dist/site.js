@@ -103,6 +103,67 @@ function extractExpectedBytes(html) {
     const bytes = Math.round(value * (multipliers[match[2].toUpperCase()] ?? 0));
     return Number.isSafeInteger(bytes) && bytes > 0 ? bytes : undefined;
 }
+function parseCount(value) {
+    if (!value)
+        return undefined;
+    const normalized = value.replace(/[^0-9]/g, '');
+    if (!normalized)
+        return undefined;
+    const count = Number(normalized);
+    return Number.isSafeInteger(count) && count >= 0 ? count : undefined;
+}
+function extractFileMetadata(html, baseUrl) {
+    const $ = load(html);
+    const userLink = $('.file_login').first();
+    const uploaderUsername = userLink.text().replace(/\s+/g, ' ').trim()
+        .replace(/\s+(?:Verified|\S*verified\S*)$/i, '').trim() || undefined;
+    const uploaderVerified = $('.file_login img[title="Verified"], .file_login [title="Verified"]').length > 0
+        ? true
+        : undefined;
+    const uploadedAtText = $('.file_time').first().text().replace(/\s+/g, ' ').trim();
+    const uploadedAt = uploadedAtText || undefined;
+    const stats = $('.file_info_param').first();
+    const statValues = stats.find('.file_info_count').map((_i, el) => $(el).text().replace(/\s+/g, ' ').trim()).get();
+    const views = parseCount(statValues[0]);
+    const downloads = parseCount(statValues[1]);
+    const likeLink = $('.file_like').first();
+    const dlikeLink = $('.file_dlike').first();
+    const likes = parseCount(likeLink.text());
+    const dislikes = parseCount(dlikeLink.text());
+    const categoryLink = $('.file_info_eye').filter((_i, el) => $(el).find('img.icon_folder').length > 0).find('a').first();
+    const category = categoryLink.text().replace(/\s+/g, ' ').trim() || undefined;
+    const categoryHref = categoryLink.attr('href');
+    let categoryId;
+    if (categoryHref) {
+        const match = categoryHref.match(/(?:^|\/)folder([A-Za-z0-9_-]+)(?:$|[/?#])/i);
+        categoryId = match?.[1] ?? undefined;
+    }
+    const tags = $('.file_info .btn_tag').map((_i, el) => $(el).text().replace(/\s+/g, ' ').trim()).get();
+    const cleanTags = tags.filter(Boolean);
+    const thumbnailSrc = $('.file_img').first().attr('src');
+    let thumbnailUrl;
+    if (thumbnailSrc) {
+        try {
+            thumbnailUrl = new URL(thumbnailSrc, baseUrl).href;
+        }
+        catch {
+            thumbnailUrl = undefined;
+        }
+    }
+    return {
+        ...(uploaderUsername ? { uploaderUsername } : {}),
+        ...(uploaderVerified !== undefined ? { uploaderVerified } : {}),
+        ...(uploadedAt ? { uploadedAt } : {}),
+        ...(views !== undefined ? { views } : {}),
+        ...(downloads !== undefined ? { downloads } : {}),
+        ...(likes !== undefined ? { likes } : {}),
+        ...(dislikes !== undefined ? { dislikes } : {}),
+        ...(categoryId ? { categoryId } : {}),
+        ...(category ? { category } : {}),
+        ...(cleanTags.length ? { tags: cleanTags } : {}),
+        ...(thumbnailUrl ? { thumbnailUrl } : {}),
+    };
+}
 function extractDownloadUrl(html) {
     const $ = load(html);
     const fileLink = $('a.file_load').first().attr('href');
@@ -369,6 +430,7 @@ export class SiteSdk {
                 title: extractTitle(html),
                 downloadUrl,
                 expectedBytes: extractExpectedBytes(html),
+                ...extractFileMetadata(html, pageUrl),
             };
         }
         catch (error) {

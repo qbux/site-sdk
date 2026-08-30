@@ -135,7 +135,21 @@ Returns normalized metadata and a resolved download URL on success.
 ### Success
 
 ```ts
-interface FileInfoSuccess {
+interface FileMetadata {
+  uploaderUsername?: string;
+  uploaderVerified?: boolean;
+  uploadedAt?: string;
+  views?: number;
+  downloads?: number;
+  likes?: number;
+  dislikes?: number;
+  categoryId?: string;
+  category?: string;
+  tags?: string[];
+  thumbnailUrl?: string;
+}
+
+interface FileInfoSuccess extends FileMetadata {
   success: true;
   fileId: string;
   title?: string;

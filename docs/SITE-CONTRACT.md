@@ -176,3 +176,23 @@ When the site changes:
 5. Run the full suite.
 6. Review whether the public result types still accurately describe behavior.
 7. Publish a patch release when the public API remains compatible.
+
+## 12. Extended file metadata
+
+The file page parser also exposes the following optional metadata when present:
+
+```text
+uploaderUsername
+uploaderVerified
+uploadedAt
+views
+downloads
+likes
+dislikes
+categoryId
+category
+tags
+thumbnailUrl
+```
+
+The parser uses the file-page DOM as the source of truth and omits fields that are not present rather than emitting `undefined` properties.

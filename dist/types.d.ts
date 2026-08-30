@@ -37,7 +37,20 @@ export interface LoginFailure {
 }
 export type LoginResult = LoginSuccess | LoginFailure;
 export type FileInfoError = 'INVALID_FILE_ID' | 'SESSION_EXPIRED' | 'FILE_RATE_LIMITED' | 'NO_DOWNLOAD_LINK' | 'REQUEST_FAILED';
-export interface FileInfoSuccess {
+export interface FileMetadata {
+    uploaderUsername?: string;
+    uploaderVerified?: boolean;
+    uploadedAt?: string;
+    views?: number;
+    downloads?: number;
+    likes?: number;
+    dislikes?: number;
+    categoryId?: string;
+    category?: string;
+    tags?: string[];
+    thumbnailUrl?: string;
+}
+export interface FileInfoSuccess extends FileMetadata {
     success: true;
     fileId: string;
     title?: string;

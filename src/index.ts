@@ -6,6 +6,7 @@ export type {
   CaptchaSolver,
   FileInfoError,
   FileInfoFailure,
+  FileMetadata,
   FileInfoResult,
   FileInfoSuccess,
   LoginError,
