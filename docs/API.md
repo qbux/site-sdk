@@ -1,6 +1,6 @@
 # API Reference
 
-Package: `@vidlove/site-sdk`
+Package: `@qbux/site-sdk`
 
 ## Entry point
 
@@ -11,7 +11,7 @@ import {
   parseFileId,
   requireFileId,
   parseTimer,
-} from '@vidlove/site-sdk';
+} from '@qbux/site-sdk';
 ```
 
 ## `createSiteSdk`
