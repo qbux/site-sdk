@@ -1,7 +1,7 @@
 {
-  "name": "@vidlove/site-sdk",
+  "name": "@qbux/site-sdk",
   "version": "0.1.6",
-  "description": "Standalone site integration SDK for VidLove-compatible authenticated file sites.",
+  "description": "Standalone site integration SDK for qbux-compatible authenticated file sites.",
   "type": "module",
   "private": false,
   "exports": {
