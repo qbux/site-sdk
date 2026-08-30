@@ -1,6 +1,6 @@
-# @vidlove/site-sdk
+# @qbux/site-sdk
 
-Standalone TypeScript/npm SDK for the site-specific integration layer used by the VidLove backend rewrite.
+Standalone TypeScript/npm SDK for the site-specific integration layer used by the qbux backend rewrite.
 
 The SDK owns **only website knowledge**. It does not own jobs, queues, workers, databases, storage, account pools, rate limiting policy, or backend configuration.
 
@@ -41,13 +41,13 @@ Those concerns belong to the backend.
 ### From npm
 
 ```bash
-npm install @vidlove/site-sdk
+npm install @qbux/site-sdk
 ```
 
 ### From a local package/tarball
 
 ```bash
-npm install ./vidlove-site-sdk-0.1.5.tgz
+npm install ./qbux-site-sdk-0.1.5.tgz
 ```
 
 Node.js 20 or newer is required.
@@ -57,7 +57,7 @@ Node.js 20 or newer is required.
 The host backend **must provide the site domain at runtime**:
 
 ```ts
-import { createSiteSdk } from '@vidlove/site-sdk';
+import { createSiteSdk } from '@qbux/site-sdk';
 
 const sdk = createSiteSdk({
   domain: process.env.SITE_DOMAIN!,
