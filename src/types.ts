@@ -24,6 +24,8 @@ export interface SiteHttpRequestOptions {
   maxRedirects?: number;
   responseType?: 'arraybuffer' | 'text';
   validateStatus?: (status: number) => boolean;
+  /** Abort in-flight site requests when the caller cancels its operation. */
+  signal?: AbortSignal;
 }
 
 export interface CaptchaSolver {

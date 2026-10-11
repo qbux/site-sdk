@@ -54,7 +54,7 @@ function resolveUrl(pathOrUrl: string, baseUrl: string): string {
   return new URL(pathOrUrl, baseUrlWithSlash(baseUrl)).href;
 }
 
-function imageToBase64(src: string, baseUrl: string, http: SiteHttpClient): Promise<string | null> {
+function imageToBase64(src: string, baseUrl: string, http: SiteHttpClient, signal?: AbortSignal): Promise<string | null> {
   if (src.startsWith('data:image')) {
     const separator = src.indexOf(',');
     return Promise.resolve(separator === -1 ? null : src.slice(separator + 1));
@@ -65,6 +65,7 @@ function imageToBase64(src: string, baseUrl: string, http: SiteHttpClient): Prom
     .get<ArrayBuffer>(imageUrl, {
       timeout: 10_000,
       responseType: 'arraybuffer',
+      signal,
     })
     .then((response) =>
       response.status === 200 ? Buffer.from(response.data).toString('base64') : null,
@@ -306,7 +307,7 @@ export class SiteSdk {
     captchaSolver: CaptchaSolver,
     username: string,
     password: string,
-    options: { maxAttempts?: number } = {},
+    options: { maxAttempts?: number; signal?: AbortSignal } = {},
   ): Promise<LoginResult> {
     if (!options || typeof options !== 'object') {
       throw new Error('Login options must be an object');
@@ -327,10 +328,12 @@ export class SiteSdk {
     let lastError = 'Login failed after all attempts';
 
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      if (options.signal?.aborted) throw new Error('REQUEST_ABORTED');
       try {
         const pageResponse = await http.get<string>(loginPageUrl, {
           timeout: 15_000,
           headers: this.headers(),
+          signal: options.signal,
           validateStatus: (status) => status >= 200 && status < 400,
         });
 
@@ -360,13 +363,14 @@ export class SiteSdk {
           continue;
         }
 
-        const captchaBase64 = await imageToBase64(captchaSrc, this.domain, http);
+        const captchaBase64 = await imageToBase64(captchaSrc, this.domain, http, options.signal);
         if (!captchaBase64) {
           lastError = 'CAPTCHA image could not be fetched';
           continue;
         }
 
         const captchaAnswer = await captchaSolver.solve(captchaBase64);
+        if (options.signal?.aborted) throw new Error('REQUEST_ABORTED');
         if (!captchaAnswer?.trim()) {
           lastError = 'CAPTCHA solver returned no answer';
           continue;
@@ -391,6 +395,7 @@ export class SiteSdk {
             },
             maxRedirects: 0,
             validateStatus: (status) => status >= 200 && status < 400,
+            signal: options.signal,
           },
         );
 
@@ -416,6 +421,7 @@ export class SiteSdk {
 
         lastError = `Unexpected login response HTTP ${loginResponse.status}`;
       } catch (error) {
+        if (options.signal?.aborted) throw new Error('REQUEST_ABORTED', { cause: error });
         lastError = error instanceof Error ? error.message : String(error);
       }
     }
@@ -427,8 +433,9 @@ export class SiteSdk {
     return { success: false, error: 'LOGIN_FAILED', message: lastError };
   }
 
-  async validateSession(http: SiteHttpClient): Promise<boolean> {
+  async validateSession(http: SiteHttpClient, options: { signal?: AbortSignal } = {}): Promise<boolean> {
     validateHttpClient(http);
+    if (options.signal?.aborted) throw new Error('REQUEST_ABORTED');
     try {
       const response = await http.get<string>(
         resolveUrl(this.validationPath(), this.domain),
@@ -437,18 +444,21 @@ export class SiteSdk {
           headers: this.headers(),
           maxRedirects: 0,
           validateStatus: (status) => status >= 200 && status < 400,
+          signal: options.signal,
         },
       );
 
       if (response.status !== 200 || typeof response.data !== 'string') return false;
       return VALIDATION_MARKERS.some((marker) => response.data.includes(marker));
-    } catch {
+    } catch (error) {
+      if (options.signal?.aborted) throw new Error('REQUEST_ABORTED', { cause: error });
       return false;
     }
   }
 
-  async fetchFileInfo(http: SiteHttpClient, input: string): Promise<FileInfoResult> {
+  async fetchFileInfo(http: SiteHttpClient, input: string, options: { signal?: AbortSignal } = {}): Promise<FileInfoResult> {
     validateHttpClient(http);
+    if (options.signal?.aborted) throw new Error('REQUEST_ABORTED');
     if (typeof input !== 'string') {
       return { success: false, fileId: null, error: 'INVALID_FILE_ID', message: 'File ID or URL must be a string' };
     }
@@ -465,6 +475,7 @@ export class SiteSdk {
         headers: this.headers(),
         maxRedirects: 0,
         validateStatus: (status) => status >= 200 && status < 400,
+        signal: options.signal,
       });
 
       if (REDIRECT_STATUSES.has(response.status) || response.status === 401 || response.status === 403) {
@@ -522,6 +533,7 @@ export class SiteSdk {
         ...extractFileMetadata(html, pageUrl),
       };
     } catch (error) {
+      if (options.signal?.aborted) throw new Error('REQUEST_ABORTED', { cause: error });
       return {
         success: false,
         fileId,

@@ -1,6 +1,6 @@
 {
   "name": "@qbux/site-sdk",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Standalone site integration SDK for qbux-compatible authenticated file sites.",
   "type": "module",
   "private": false,

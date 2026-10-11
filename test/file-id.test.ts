@@ -9,6 +9,11 @@ describe('file id parser', () => {
     ['https://example.test/file123?download=1', '123'],
     ['https://example.test/path/file123/', '123'],
     ['%66ile123', '123'],
+    ['http://example.onion/file123628', '123628'],
+    ['http://example.onion/123628', '123628'],
+    ['  file123628  ', '123628'],
+    ['../file123', '123'],
+    ['..file123', '123'],
   ])('parses %s', (input, expected) => {
     expect(parseFileId(input)).toBe(expected);
   });

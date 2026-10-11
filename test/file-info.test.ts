@@ -5,6 +5,24 @@ import { MockHttp, response } from './helpers.js';
 describe('file info', () => {
   const sdk = createSiteSdk({ domain: 'https://example.test' });
 
+  it('passes an AbortSignal to the HTTP transport', async () => {
+    const controller = new AbortController();
+    const http = new MockHttp([response(200, '<main><h1>x</h1></main>')]);
+
+    await sdk.fetchFileInfo(http, '123', { signal: controller.signal });
+
+    expect(http.requests[0]?.options?.signal).toBe(controller.signal);
+  });
+
+  it('rejects an already-aborted file lookup before making a request', async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const http = new MockHttp();
+
+    await expect(sdk.fetchFileInfo(http, '123', { signal: controller.signal })).rejects.toThrow('REQUEST_ABORTED');
+    expect(http.requests).toHaveLength(0);
+  });
+
   it('extracts title, resource URL, and expected bytes', async () => {
     const html = `
       <main>
